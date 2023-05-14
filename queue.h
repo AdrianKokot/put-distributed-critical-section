@@ -1,18 +1,20 @@
 #ifndef QUEUEH
 #define QUEUEH
 
-struct node
+typedef struct node
 {
   int data;
   int priority;
-};
+} node;
 
-typedef struct node node;
+typedef struct queue
+{
+  int size;
+  node *array;
+} queue;
 
-void insert(node array[], node newNode);
-
-void deleteRoot(node array[], int data);
-
-void printArray(node array[], int q_size);
+void queue_insert(queue *, node);
+void queue_delete(queue *, int);
+void queue_print(queue *);
 
 #endif

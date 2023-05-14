@@ -1,11 +1,7 @@
-// Priority Queue implementation in C
-
 #include <stdio.h>
 #include "queue.h"
-#include "util.h"
-extern int rank;
 
-int q_size = 0;
+// Internal functions
 void swap(node *a, node *b)
 {
   node temp = *b;
@@ -13,88 +9,102 @@ void swap(node *a, node *b)
   *a = temp;
 }
 
-// Function to heapify the tree
-void heapify(node array[], int q_size, int i)
+void heapify(queue *queue, int index)
 {
-  if (q_size == 1)
-  {
-    printf("Single element in the heap");
-  }
-  else
-  {
-    // Find the largest among root, left child and right child
-    int smallest = i;
-    int l = 2 * i + 1;
-    int r = 2 * i + 2;
-    if (l < q_size && (array[l].priority < array[smallest].priority || (array[l].priority == array[smallest].priority && array[l].data < array[smallest].data)))
-      smallest = l;
-    if (r < q_size && (array[r].priority < array[smallest].priority || (array[r].priority == array[smallest].priority && array[r].data < array[smallest].data)))
-      smallest = r;
+  if (queue->size < 2)
+    return;
 
-    // Swap and continue heapifying if root is not smallest
-    if (smallest != i)
-    {
-      swap(&array[i], &array[smallest]);
-      heapify(array, q_size, smallest);
-    }
+  int smallest = index,
+      left = 2 * index + 1,
+      right = 2 * index + 2;
+
+  if (left < queue->size && (queue->array[left].priority < queue->array[smallest].priority || (queue->array[left].priority == queue->array[smallest].priority && queue->array[left].data < queue->array[smallest].data)))
+    smallest = left;
+
+  if (right < queue->size && (queue->array[right].priority < queue->array[smallest].priority || (queue->array[right].priority == queue->array[smallest].priority && queue->array[right].data < queue->array[smallest].data)))
+    smallest = right;
+
+  if (smallest != index)
+  {
+#ifdef DEBUG
+
+    printf("Before swap\n");
+    queue_print(queue);
+
+#endif
+    swap(&queue->array[index], &queue->array[smallest]);
+#ifdef DEBUG
+
+    printf("After swap\n");
+    queue_print(queue);
+#endif
+
+    heapify(queue, smallest);
+#ifdef DEBUG
+
+    printf("After heapify\n");
+    queue_print(queue);
+#endif
   }
 }
 
-// Function to insert an element into the tree
-void insert(node array[], node newNode)
+// Interface functions
+
+/// @brief Add node to priority queue
+/// @param queue
+/// @param node
+void queue_insert(queue *queue, node node)
 {
-  if (q_size == 0)
+  if (queue->size == 0)
   {
-    array[0] = newNode;
-    q_size += 1;
+    queue->array[0] = node;
+    queue->size += 1;
+    return;
   }
-  else
+
+  queue->array[queue->size] = node;
+  queue->size += 1;
+  for (int i = queue->size / 2 - 1; i >= 0; i--)
   {
-    array[q_size] = newNode;
-    q_size += 1;
-    for (int i = q_size / 2 - 1; i >= 0; i--)
-    {
-      heapify(array, q_size, i);
-    }
+    heapify(queue, i);
   }
 }
 
-// Function to delete an element from the tree
-void deleteRoot(node array[], int data)
+/// @brief Delete node with given data from priority queue
+/// @param queue
+/// @param data
+void queue_delete(queue *queue, int data)
 {
   int i;
-  for (i = 0; i < q_size; i++)
+  for (i = 0; i < queue->size; i++)
   {
-    if (data == array[i].data)
+    if (data == queue->array[i].data)
       break;
   }
 
-  if (i == q_size)
+  if (i == queue->size)
   {
     return;
   }
 
-  swap(&array[i], &array[q_size - 1]);
-  q_size -= 1;
-  for (int i = q_size / 2 - 1; i >= 0; i--)
+  swap(&queue->array[i], &queue->array[queue->size - 1]);
+  queue->size -= 1;
+  for (int i = queue->size / 2 - 1; i >= 0; i--)
   {
-    heapify(array, q_size, i);
+    heapify(queue, i);
   }
 
-  deleteRoot(array, data);
+  queue_delete(queue, data);
 }
 
-// Print the array
-void printArray(node array[], int q_size)
+void queue_print(queue *queue)
 {
 #ifdef DEBUG
-
-  printf("queue by %d\n", rank);
-  for (int i = 0; i < q_size; ++i)
-    printf("%d ", array[i].priority);
+  for (int i = 0; i < queue->size; ++i)
+    printf("%d ", queue->array[i].priority);
   printf("\n");
-  for (int i = 0; i < q_size; ++i)
-    printf("%d ", array[i].data);
+  for (int i = 0; i < queue->size; ++i)
+    printf("%d ", queue->array[i].data);
   printf("\n");
 #endif
 }

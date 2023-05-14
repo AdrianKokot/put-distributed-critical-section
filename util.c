@@ -7,7 +7,8 @@ state_t stan = InRun;
 pthread_mutex_t stateMut = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lamportMut = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t processesClocksMut = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t queueMut = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_t toolsQueueMut = PTHREAD_MUTEX_INITIALIZER;
 
 struct tagNames_t
 {
@@ -83,7 +84,7 @@ void changeClock(int newLamport)
 
 void printProcessesClocks()
 {
-  #ifdef DEBUG
+#ifdef DEBUG
   printf("printProcessesClocks by %d\n", rank);
   for (int i = 0; i < size; i++)
   {
@@ -95,7 +96,7 @@ void printProcessesClocks()
     printf("%d ", processesClocks[i]);
   }
   printf("\n");
-  #endif
+#endif
 }
 
 void updateProcessClock(int process, int newClock)
@@ -107,25 +108,35 @@ void updateProcessClock(int process, int newClock)
   pthread_mutex_unlock(&processesClocksMut);
 }
 
-extern int q_size;
 void processRequest(packet_t packet)
 {
-  pthread_mutex_lock(&queueMut);
+  pthread_mutex_lock(&toolsQueueMut);
   node newNode = {packet.src, packet.ts};
-  insert(queue, newNode);
-  pthread_mutex_unlock(&queueMut);
-  printArray(queue, q_size);
+  queue_insert(toolsQueue, newNode);
+  pthread_mutex_unlock(&toolsQueueMut);
+  debug("ToolsQueue insert by %d", rank);
+  queue_print(toolsQueue);
 }
 
 void processRelease(packet_t packet)
 {
-  pthread_mutex_lock(&queueMut);
-  deleteRoot(queue, packet.src);
-  pthread_mutex_unlock(&queueMut);
-  printArray(queue, q_size);
+  pthread_mutex_lock(&toolsQueueMut);
+  queue_delete(toolsQueue, packet.src);
+  pthread_mutex_unlock(&toolsQueueMut);
+  debug("ToolsQueue release by %d", rank);
+  queue_print(toolsQueue);
 };
 
-int canEnterCriticalSection()
+int canEnterCriticalSection(queue *queue, int first_n_allowed)
 {
-  return q_size > 0 && queue[0].data == rank;
+  if (queue->size == 0)
+    return FALSE;
+
+  for (int i = 0; i < first_n_allowed && i < queue->size; i++)
+  {
+    if (queue->array[i].data == rank)
+      return TRUE;
+  }
+
+  return FALSE;
 }

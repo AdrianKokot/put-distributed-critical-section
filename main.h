@@ -18,11 +18,13 @@
 
 extern int rank;
 extern int size;
+extern int tools_number;
+extern int positions_number;
 extern int ackCount;
 extern int globalLamport;
 extern pthread_t threadKom;
 extern int *processesClocks;
-extern node *queue;
+extern queue *toolsQueue;
 
 #ifdef DEBUG
 #define debug(FORMAT,...) printf("[%d] %c[%d;%dm [%d]: " FORMAT "%c[%d;%dm\n",  globalLamport, 27, (1+(rank/7))%2, 31+(6+rank)%7, rank, ##__VA_ARGS__, 27,0,37);

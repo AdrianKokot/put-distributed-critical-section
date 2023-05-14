@@ -1,7 +1,8 @@
 #include "main.h"
 #include "watek_glowny.h"
 
-int allAckOlder() {
+int allAckOlder()
+{
   // for (int i = 0; i < size; i++) {
   //   if (i != rank && processesClocks[i] < processesClocks[rank]) {
   //     return FALSE;
@@ -30,7 +31,7 @@ void mainLoop()
 
         // debug("Zmieniam stan na wysyłanie");
         packet_t *pkt = malloc(sizeof(packet_t));
-        pkt->data = perc;
+        // pkt->data = perc;
         pkt->src = rank;
         pkt->ts = globalLamport;
         ackCount = 0;
@@ -51,28 +52,28 @@ void mainLoop()
       // debug("Skończyłem myśleć");
       break;
     case InWant:
-      #ifdef IGNORE_WAIT
-      #else
+#ifdef IGNORE_WAIT
+#else
       println("Czekam na wejście do sekcji krytycznej");
-      #endif
-      if (ackCount == size - 1 && canEnterCriticalSection() && allAckOlder())
+#endif
+      if (ackCount == size - 1 && canEnterCriticalSection(toolsQueue, tools_number) && allAckOlder())
         changeState(InSection);
       break;
     case InSection:
       // tutaj zapewne jakiś muteks albo zmienna warunkowa
       println("Jestem w sekcji krytycznej");
-      sleep(5);
+      sleep(random() % 10);
       // if ( perc < 25 ) {
       // debug("Perc: %d", perc);
       println("Wychodzę z sekcji krytycznej");
       // debug("Zmieniam stan na wysyłanie");
       packet_t *pkt = malloc(sizeof(packet_t));
-      pkt->data = perc;
+      // pkt->data = perc;
       pkt->src = rank;
       pkt->ts = globalLamport;
-      for (int i = 0; i <= size - 1; i++)
+      for (int i = 0; i < size; i++)
         if (i != rank)
-          sendPacket(pkt, (rank + 1) % size, RELEASE);
+          sendPacket(pkt, i, RELEASE);
         else
           processRelease(*pkt);
 

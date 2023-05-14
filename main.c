@@ -2,11 +2,11 @@
 #include "watek_glowny.h"
 #include "watek_komunikacyjny.h"
 
-int rank, size;
+int rank, size, tools_number, positions_number;
 int ackCount = 0;
 int globalLamport = 0;
 int *processesClocks;
-node *queue;
+queue *toolsQueue;
 
 pthread_t threadKom;
 
@@ -46,6 +46,15 @@ void check_thread_support(int provided)
 
 int main(int argc, char **argv)
 {
+  if (argc < 3)
+  {
+    printf("Usage: %s tools_number positions_number\n", argv[0]);
+    exit(1);
+  }
+
+  tools_number = atoi(argv[1]);
+  positions_number = atoi(argv[2]);
+
   MPI_Status status;
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
@@ -55,12 +64,14 @@ int main(int argc, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   processesClocks = malloc(size * sizeof(int));
-  queue = malloc(sizeof(node) * size);
+  toolsQueue = malloc(sizeof(queue));
+  toolsQueue->size = 0;
+  toolsQueue->array = malloc(size * sizeof(node));
   for (int i = 0; i < size; i++)
   {
     processesClocks[i] = 0;
   }
-  printf("Witaj, świecie, jestem procesem nr %d na %d.\n", rank, size);
+  // printf("Witaj, świecie, jestem procesem nr %d na %d.\n", rank, size);
   pthread_create(&threadKom, NULL, startKomWatek, 0);
   mainLoop();
   finalizuj();
