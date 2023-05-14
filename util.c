@@ -2,24 +2,23 @@
 #include "util.h"
 MPI_Datatype MPI_PAKIET_T;
 
-state_t stan = InRun;
+state_t stan = Start;
 
 pthread_mutex_t stateMut = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lamportMut = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t processesClocksMut = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_mutex_t toolsQueueMut = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t positionsQueueMut = PTHREAD_MUTEX_INITIALIZER;
 
 struct tagNames_t
 {
   const char *name;
   int tag;
 } tagNames[] = {
-    {"pakiet aplikacyjny", APP_PKT},
-    {"finish", FINISH},
-    {"potwierdzenie", ACK},
-    {"prośbę o sekcję krytyczną", REQUEST},
-    {"zwolnienie sekcji krytycznej", RELEASE}};
+    {"ACK", ACK},
+    {"REQUEST", REQUEST},
+    {"RELEASE", RELEASE}};
 
 const char *const tag2string(int tag)
 {
@@ -37,9 +36,9 @@ void inicjuj_typ_pakietu()
   MPI_Datatype typy[NITEMS] = {MPI_INT, MPI_INT, MPI_INT};
 
   MPI_Aint offsets[NITEMS];
-  offsets[0] = offsetof(packet_t, ts);
-  offsets[1] = offsetof(packet_t, src);
-  offsets[2] = offsetof(packet_t, data);
+  offsets[0] = offsetof(packet_t, timestamp);
+  offsets[1] = offsetof(packet_t, process);
+  offsets[2] = offsetof(packet_t, tag);
 
   MPI_Type_create_struct(NITEMS, blocklengths, offsets, typy, &MPI_PAKIET_T);
 
@@ -55,8 +54,8 @@ void sendPacket(packet_t *pkt, int destination, int tag)
     pkt = malloc(sizeof(packet_t));
     freepkt = 1;
   }
-  pkt->src = rank;
-  pkt->ts = globalLamport;
+  pkt->process = rank;
+  pkt->timestamp = globalLamport;
   MPI_Send(pkt, 1, MPI_PAKIET_T, destination, tag, MPI_COMM_WORLD);
   debug("Wysyłam %s do %d\n", tag2string(tag), destination);
   if (freepkt)
@@ -109,21 +108,44 @@ void updateProcessClock(int process, int newClock)
 
 void processRequest(packet_t packet)
 {
-  pthread_mutex_lock(&toolsQueueMut);
-  node newNode = {packet.src, packet.ts};
-  queue_insert(toolsQueue, newNode);
-  pthread_mutex_unlock(&toolsQueueMut);
-  debug("ToolsQueue insert by %d", rank);
-  queue_print(toolsQueue);
+  node newNode = {packet.process, packet.timestamp};
+
+  if (packet.tag == TOOL)
+  {
+    pthread_mutex_lock(&toolsQueueMut);
+    queue_insert(toolsQueue, newNode);
+    debug("ToolsQueue insert by %d", rank);
+    queue_print(toolsQueue);
+    pthread_mutex_unlock(&toolsQueueMut);
+  }
+  else
+  {
+    pthread_mutex_lock(&positionsQueueMut);
+    queue_insert(positionsQueue, newNode);
+    debug("PositionsQueue insert by %d", rank);
+    queue_print(positionsQueue);
+    pthread_mutex_unlock(&positionsQueueMut);
+  }
 }
 
 void processRelease(packet_t packet)
 {
-  pthread_mutex_lock(&toolsQueueMut);
-  queue_delete(toolsQueue, packet.src);
-  pthread_mutex_unlock(&toolsQueueMut);
-  debug("ToolsQueue release by %d", rank);
-  queue_print(toolsQueue);
+  if (packet.tag == TOOL)
+  {
+    pthread_mutex_lock(&toolsQueueMut);
+    queue_delete(toolsQueue, packet.process);
+    debug("ToolsQueue release by %d", rank);
+    queue_print(toolsQueue);
+    pthread_mutex_unlock(&toolsQueueMut);
+  }
+  else
+  {
+    pthread_mutex_lock(&positionsQueueMut);
+    queue_delete(positionsQueue, packet.process);
+    debug("PositionsQueue release by %d", rank);
+    queue_print(positionsQueue);
+    pthread_mutex_unlock(&positionsQueueMut);
+  }
 };
 
 int canEnterCriticalSection(queue *queue, int first_n_allowed)
@@ -138,4 +160,18 @@ int canEnterCriticalSection(queue *queue, int first_n_allowed)
   }
 
   return FALSE;
+}
+
+/// @brief Create new packet
+/// @param tag
+/// @param process
+/// @param timestamp
+/// @return
+packet_t *createPacket(int tag, int process, int timestamp)
+{
+  packet_t *pkt = malloc(sizeof(packet_t));
+  pkt->tag = tag;
+  pkt->process = process;
+  pkt->timestamp = timestamp;
+  return pkt;
 }

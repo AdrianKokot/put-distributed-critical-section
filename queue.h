@@ -16,5 +16,6 @@ typedef struct queue
 void queue_insert(queue *, node);
 void queue_delete(queue *, int);
 void queue_print(queue *);
+queue* queue_init(int);
 
 #endif

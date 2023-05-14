@@ -7,6 +7,7 @@ int ackCount = 0;
 int globalLamport = 0;
 int *processesClocks;
 queue *toolsQueue;
+queue *positionsQueue;
 
 pthread_t threadKom;
 
@@ -63,15 +64,20 @@ int main(int argc, char **argv)
   inicjuj_typ_pakietu();
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0)
+  {
+    printf("====================================\n");
+    printf("Liczba kradziejów:\t%d\nLiczba narzędzi:\t%d\nLiczba miejsc:\t\t%d\n", size, tools_number, positions_number);
+    printf("====================================\n");
+  }
   processesClocks = malloc(size * sizeof(int));
-  toolsQueue = malloc(sizeof(queue));
-  toolsQueue->size = 0;
-  toolsQueue->array = malloc(size * sizeof(node));
+  toolsQueue = queue_init(size);
+  positionsQueue = queue_init(size);
   for (int i = 0; i < size; i++)
   {
     processesClocks[i] = 0;
   }
-  // printf("Witaj, świecie, jestem procesem nr %d na %d.\n", rank, size);
   pthread_create(&threadKom, NULL, startKomWatek, 0);
   mainLoop();
   finalizuj();

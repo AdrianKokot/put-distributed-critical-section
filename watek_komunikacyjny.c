@@ -11,18 +11,18 @@ void *startKomWatek(void *ptr)
   {
     // debug("czekam na recv");
     MPI_Recv(&pakiet, 1, MPI_PAKIET_T, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    updateProcessClock(pakiet.process, pakiet.timestamp);
+    changeClock((pakiet.timestamp > globalLamport ? pakiet.timestamp : globalLamport) + 1);
 
     switch (status.MPI_TAG)
     {
     case REQUEST:
-      changeClock((pakiet.ts > globalLamport ? pakiet.ts : globalLamport) + 1);
       processRequest(pakiet);
       // debug("Ktoś coś prosi. A niech ma!");
-      sendPacket(0, status.MPI_SOURCE, ACK);
+      sendPacket(createPacket(pakiet.tag, rank, globalLamport), status.MPI_SOURCE, ACK);
       break;
     case ACK:
       // debug("Dostałem ACK od %d, mam już %d", status.MPI_SOURCE, ackCount);
-      updateProcessClock(pakiet.src, pakiet.ts);
       ackCount++; /* czy potrzeba tutaj muteksa? Będzie wyścig, czy nie będzie? Zastanówcie się. */
       break;
     case RELEASE:

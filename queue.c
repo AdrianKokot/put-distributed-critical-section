@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "queue.h"
 
 // Internal functions
@@ -76,13 +77,13 @@ void queue_insert(queue *queue, node node)
 void queue_delete(queue *queue, int data)
 {
   int i;
-  for (i = 0; i < queue->size; i++)
+  for (i = queue->size - 1; i >= 0; i--)
   {
     if (data == queue->array[i].data)
       break;
   }
 
-  if (i == queue->size)
+  if (i < 0)
   {
     return;
   }
@@ -93,8 +94,6 @@ void queue_delete(queue *queue, int data)
   {
     heapify(queue, i);
   }
-
-  queue_delete(queue, data);
 }
 
 void queue_print(queue *queue)
@@ -107,4 +106,17 @@ void queue_print(queue *queue)
     printf("%d ", queue->array[i].data);
   printf("\n");
 #endif
+}
+
+/// @brief Create new priority queue with internal array size of size
+/// @param size
+/// @return
+queue *queue_init(int size)
+{
+  queue *q;
+  q = malloc(sizeof(queue));
+  q->size = 0;
+  q->array = malloc(size * sizeof(node));
+
+  return q;
 }

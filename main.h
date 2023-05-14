@@ -25,6 +25,7 @@ extern int globalLamport;
 extern pthread_t threadKom;
 extern int *processesClocks;
 extern queue *toolsQueue;
+extern queue *positionsQueue;
 
 #ifdef DEBUG
 #define debug(FORMAT,...) printf("[%d] %c[%d;%dm [%d]: " FORMAT "%c[%d;%dm\n",  globalLamport, 27, (1+(rank/7))%2, 31+(6+rank)%7, rank, ##__VA_ARGS__, 27,0,37);
