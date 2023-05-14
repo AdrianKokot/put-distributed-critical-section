@@ -103,7 +103,6 @@ void updateProcessClock(int process, int newClock)
 {
   pthread_mutex_lock(&processesClocksMut);
   processesClocks[process] = newClock;
-  processesClocks[rank] = globalLamport;
   printProcessesClocks();
   pthread_mutex_unlock(&processesClocksMut);
 }

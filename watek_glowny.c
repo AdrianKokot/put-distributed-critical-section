@@ -3,11 +3,11 @@
 
 int allAckOlder()
 {
-  // for (int i = 0; i < size; i++) {
-  //   if (i != rank && processesClocks[i] < processesClocks[rank]) {
-  //     return FALSE;
-  //   }
-  // }
+  for (int i = 0; i < size; i++) {
+    if (i != rank && processesClocks[i] < processesClocks[rank]) {
+      return FALSE;
+    }
+  }
   return TRUE;
 }
 
@@ -34,6 +34,7 @@ void mainLoop()
         // pkt->data = perc;
         pkt->src = rank;
         pkt->ts = globalLamport;
+        updateProcessClock(pkt->src, pkt->ts);
         ackCount = 0;
         for (int i = 0; i <= size - 1; i++)
         {
