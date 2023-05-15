@@ -48,7 +48,7 @@ void inicjuj_typ_pakietu()
 void sendPacket(packet_t *pkt, int destination, int tag)
 {
   MPI_Send(pkt, 1, MPI_PAKIET_T, destination, tag, MPI_COMM_WORLD);
-  debug("Wysyłam %s do %d\n", tag2string(tag), destination);
+  debug("Wysyłam %s %s do %d\n", tag2string(tag), pkt->tag == TOOL ? "TOOL" : "LAB", destination);
 }
 
 void changeState(state_t newState)
@@ -72,17 +72,13 @@ void changeClock(int newLamport)
 
 int getClock()
 {
-  int clock;
-  pthread_mutex_lock(&lamportMut);
-  clock = globalLamport;
-  pthread_mutex_unlock(&lamportMut);
-  return clock;
+  return globalLamport;
 }
 
 void printProcessesClocks()
 {
 #ifdef DEBUG
-  printf("printProcessesClocks by %d\n", rank);
+  println("ProcessesClocks");
   for (int i = 0; i < size; i++)
   {
     printf("%s ", i == rank ? "I" : "-");
@@ -115,7 +111,7 @@ void processRequest(packet_t packet)
 #ifdef QUEUE_PRINT
     if (rank == 0)
     {
-      printf("ToolsQueue insert %d %d", newNode.data, newNode.priority);
+      println("ToolsQueue insert %d %d", newNode.data, newNode.priority);
       queue_print(toolsQueue);
     }
 #endif
@@ -128,7 +124,7 @@ void processRequest(packet_t packet)
 #ifdef QUEUE_PRINT
     if (rank == 0)
     {
-      printf("PositionsQueue insert %d %d", newNode.data, newNode.priority);
+      println("PositionsQueue insert %d %d", newNode.data, newNode.priority);
       queue_print(positionsQueue);
     }
 #endif
@@ -145,7 +141,7 @@ void processRelease(packet_t packet)
 #ifdef QUEUE_PRINT
     if (rank == 0)
     {
-      printf("ToolsQueue release %d", packet.process);
+      println("ToolsQueue release %d", packet.process);
       queue_print(toolsQueue);
     }
 #endif
@@ -158,7 +154,7 @@ void processRelease(packet_t packet)
 #ifdef QUEUE_PRINT
     if (rank == 0)
     {
-      printf("PositionsQueue release %d", packet.process);
+      println("PositionsQueue release %d", packet.process);
       queue_print(positionsQueue);
     }
 #endif
@@ -166,19 +162,37 @@ void processRelease(packet_t packet)
   }
 };
 
-int canEnterCriticalSection(queue *queue, int first_n_allowed)
+int isOnAllowedPositionInQueue(queue *queue, int numberOfAllowePositions)
 {
   if (queue->size == 0)
     return FALSE;
 
-  for (int i = 0; i < first_n_allowed && i < queue->size; i++)
+  for (int i = 0; i < numberOfAllowePositions && i < queue->size; i++)
   {
-    if (queue->array[i].data == rank && queue->array[i].priority == processesClocks[rank]) {
+    if (queue->array[i].data == rank && queue->array[i].priority == processesClocks[rank])
+    {
       return TRUE;
     }
   }
 
   return FALSE;
+}
+
+int areAllAckOlder()
+{
+  for (int i = 0; i < size; i++)
+  {
+    if (i != rank && processesClocks[i] <= processesClocks[rank])
+    {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+int canEnterCriticalSection(queue *queue, int first_n_allowed)
+{
+  return ackCount == size - 1 && isOnAllowedPositionInQueue(queue, first_n_allowed) && areAllAckOlder();
 }
 
 /// @brief Create new packet

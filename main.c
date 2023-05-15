@@ -71,6 +71,7 @@ int main(int argc, char **argv)
     printf("Liczba kradziejów:\t%d\nIlość sprzętu:\t\t%d\nLiczba miejsc:\t\t%d\n", size, tools_number, positions_number);
     printf("====================================\n");
   }
+
   processesClocks = malloc(size * sizeof(int));
   toolsQueue = queue_init(size);
   positionsQueue = queue_init(size);

@@ -1,39 +1,69 @@
 #include "main.h"
 #include "watek_glowny.h"
 
-int allAckOlder()
+void request(int tag)
 {
+  changeClock(globalLamport + 1);
+  packet_t *pkt = createPacket(tag);
+
+  updateProcessClock(pkt->process, pkt->timestamp);
+
+  ackCount = 0;
   for (int i = 0; i < size; i++)
   {
-    if (i != rank && processesClocks[i] <= processesClocks[rank])
+    if (i != rank)
     {
-      return FALSE;
+      sendPacket(pkt, i, REQUEST);
+    }
+    else
+    {
+      processRequest(*pkt);
     }
   }
-  return TRUE;
+
+  free(pkt);
+}
+
+void release(int tag)
+{
+  changeClock(globalLamport + 1);
+  packet_t *pkt = createPacket(tag);
+  updateProcessClock(pkt->process, pkt->timestamp);
+
+  for (int i = 0; i < size; i++)
+  {
+    if (i != rank)
+    {
+      sendPacket(pkt, i, RELEASE);
+    }
+    else
+    {
+      processRelease(*pkt);
+    }
+  }
+
+  free(pkt);
 }
 
 void *pthread_delayed_release(void *ptr)
 {
+  int *tag = ((int *)ptr);
   srandom(rank);
   println("Odkładam narzędzie do naładowania");
-  packet_t *pkt = (packet_t *)ptr;
-  sleep(random() % 20);
-  pkt->timestamp = getClock();
-  for (int i = 0; i < size; i++)
-    if (i != rank)
-      sendPacket(pkt, i, RELEASE);
-    else
-      processRelease(*pkt);
 
-  free(pkt);
+  sleep(random() % 20 + 5);
+
+  release(*tag);
   println("Narzędzie naładowane");
+  free(tag);
 }
 
 void delayed_release(int tag)
 {
   pthread_t tid;
-  pthread_create(&tid, NULL, pthread_delayed_release, createPacket(tag));
+  int *i = malloc(sizeof(int));
+  *i = tag;
+  pthread_create(&tid, NULL, pthread_delayed_release, i);
 }
 
 void mainLoop()
@@ -49,61 +79,23 @@ void mainLoop()
     case Start:
       changeState(RequestTool);
       break;
-    case SendRelease:
-      changeClock(globalLamport + 1);
-      updateProcessClock(pkt->process, pkt->timestamp);
-
-      for (int i = 0; i < size; i++)
-        if (i != rank)
-          sendPacket(pkt, i, RELEASE);
-        else
-          processRelease(*pkt);
-
-      changeState(pkt->tag == TOOL ? RequestLab : RequestTool);
-      free(pkt);
-      break;
-    case SendRequest:
-      changeState(pkt->tag == TOOL ? WaitingForTool : WaitingForLab);
-      changeClock(globalLamport + 1);
-      pkt->timestamp = getClock();
-      updateProcessClock(pkt->process, pkt->timestamp);
-
-      ackCount = 0;
-      for (int i = 0; i < size; i++)
-      {
-        if (i != rank)
-        {
-          sendPacket(pkt, i, REQUEST);
-        }
-        else
-        {
-          processRequest(*pkt);
-        }
-      }
-
-      free(pkt);
-      break;
-
     case RequestTool:
       println("Ubiegam się o sprzęt");
-      changeClock(globalLamport + 1);
-      pkt = createPacket(TOOL);
-      changeState(SendRequest);
+      request(TOOL);
+      changeState(WaitingForTool);
       break;
 
     case RequestLab:
       println("Ubiegam się o miejsce");
-      changeClock(globalLamport + 1);
-      pkt = createPacket(LAB);
-      changeState(SendRequest);
+      request(LAB);
+      changeState(WaitingForLab);
       break;
 
     case WaitingForTool:
-
 #ifndef IGNORE_WAIT
       println("Czekam na sprzęt");
 #endif
-      if (ackCount == size - 1 && canEnterCriticalSection(toolsQueue, tools_number) && allAckOlder())
+      if (canEnterCriticalSection(toolsQueue, tools_number))
         changeState(UsingTool);
 
       break;
@@ -112,7 +104,7 @@ void mainLoop()
 #ifndef IGNORE_WAIT
       println("Czekam na miejsce");
 #endif
-      if (ackCount == size - 1 && canEnterCriticalSection(positionsQueue, positions_number) && allAckOlder())
+      if (canEnterCriticalSection(positionsQueue, positions_number))
         changeState(UsingLab);
 
       break;
@@ -130,8 +122,8 @@ void mainLoop()
       sleep(random() % 10);
       println("Zwalniam miejsce w laboratorium");
 
-      pkt = createPacket(LAB);
-      changeState(SendRelease);
+      release(LAB);
+      changeState(RequestTool);
       break;
 
     default:
