@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "queue.h"
-#include "util.h"
 
 // Internal functions
 void swap(node *a, node *b)
@@ -11,7 +10,8 @@ void swap(node *a, node *b)
   *a = temp;
 }
 
-void queue_bubble_sort(queue *queue) {
+void queue_bubble_sort(queue *queue)
+{
   int i, j;
   for (i = 0; i < queue->size - 1; i++)
     for (j = 0; j < queue->size - i - 1; j++)
@@ -63,16 +63,13 @@ void queue_delete(queue *queue, int data)
 void queue_print(queue *queue)
 {
 #ifdef QUEUE_PRINT
-  if (rank == 0)
-  {
-    printf("-----------------------------\n");
-    for (int i = 0; i < queue->size; ++i)
-      printf("%d ", queue->array[i].priority);
-    printf("\n");
-    for (int i = 0; i < queue->size; ++i)
-      printf("%d ", queue->array[i].data);
-    printf("\n");
-  }
+  printf("-----------------------------\n");
+  for (int i = 0; i < queue->size; ++i)
+    printf("%d ", queue->array[i].priority);
+  printf("\n");
+  for (int i = 0; i < queue->size; ++i)
+    printf("%d ", queue->array[i].data);
+  printf("\n");
 #endif
 }
 

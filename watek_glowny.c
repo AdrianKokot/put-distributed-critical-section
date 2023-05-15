@@ -15,9 +15,10 @@ int allAckOlder()
 
 void *pthread_delayed_release(void *ptr)
 {
+  srandom(rank);
   println("Odkładam narzędzie do naładowania");
   packet_t *pkt = (packet_t *)ptr;
-  sleep(random() % 10);
+  sleep(random() % 20);
   pkt->timestamp = getClock();
   for (int i = 0; i < size; i++)
     if (i != rank)
@@ -65,11 +66,11 @@ void mainLoop()
       changeState(pkt->tag == TOOL ? WaitingForTool : WaitingForLab);
       changeClock(globalLamport + 1);
       pkt->timestamp = getClock();
+      updateProcessClock(pkt->process, pkt->timestamp);
+
       ackCount = 0;
       for (int i = 0; i < size; i++)
       {
-        // updateProcessClock(pkt->process, pkt->timestamp);
-
         if (i != rank)
         {
           sendPacket(pkt, i, REQUEST);

@@ -60,10 +60,10 @@ int main(int argc, char **argv)
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   check_thread_support(provided);
-  srand(rank);
   inicjuj_typ_pakietu();
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  srand(rank);
 
   if (rank == 0)
   {

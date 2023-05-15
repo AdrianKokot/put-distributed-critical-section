@@ -173,8 +173,9 @@ int canEnterCriticalSection(queue *queue, int first_n_allowed)
 
   for (int i = 0; i < first_n_allowed && i < queue->size; i++)
   {
-    if (queue->array[i].data == rank)
+    if (queue->array[i].data == rank && queue->array[i].priority == processesClocks[rank]) {
       return TRUE;
+    }
   }
 
   return FALSE;
