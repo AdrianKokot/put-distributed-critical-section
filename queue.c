@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "queue.h"
+#include "util.h"
 
 // Internal functions
 void swap(node *a, node *b)
@@ -10,43 +11,12 @@ void swap(node *a, node *b)
   *a = temp;
 }
 
-void heapify(queue *queue, int index)
-{
-  if (queue->size < 2)
-    return;
-
-  int smallest = index,
-      left = 2 * index + 1,
-      right = 2 * index + 2;
-
-  if (left < queue->size && (queue->array[left].priority < queue->array[smallest].priority || (queue->array[left].priority == queue->array[smallest].priority && queue->array[left].data < queue->array[smallest].data)))
-    smallest = left;
-
-  if (right < queue->size && (queue->array[right].priority < queue->array[smallest].priority || (queue->array[right].priority == queue->array[smallest].priority && queue->array[right].data < queue->array[smallest].data)))
-    smallest = right;
-
-  if (smallest != index)
-  {
-#ifdef DEBUG
-
-    printf("Before swap\n");
-    queue_print(queue);
-
-#endif
-    swap(&queue->array[index], &queue->array[smallest]);
-#ifdef DEBUG
-
-    printf("After swap\n");
-    queue_print(queue);
-#endif
-
-    heapify(queue, smallest);
-#ifdef DEBUG
-
-    printf("After heapify\n");
-    queue_print(queue);
-#endif
-  }
+void queue_bubble_sort(queue *queue) {
+  int i, j;
+  for (i = 0; i < queue->size - 1; i++)
+    for (j = 0; j < queue->size - i - 1; j++)
+      if (queue->array[j].priority > queue->array[j + 1].priority || (queue->array[j].priority == queue->array[j + 1].priority && queue->array[j].data > queue->array[j + 1].data))
+        swap(&queue->array[j], &queue->array[j + 1]);
 }
 
 // Interface functions
@@ -65,10 +35,7 @@ void queue_insert(queue *queue, node node)
 
   queue->array[queue->size] = node;
   queue->size += 1;
-  for (int i = queue->size / 2 - 1; i >= 0; i--)
-  {
-    heapify(queue, i);
-  }
+  queue_bubble_sort(queue);
 }
 
 /// @brief Delete node with given data from priority queue
@@ -77,34 +44,35 @@ void queue_insert(queue *queue, node node)
 void queue_delete(queue *queue, int data)
 {
   int i;
-  for (i = queue->size - 1; i >= 0; i--)
+  for (i = 0; i < queue->size; i++)
   {
     if (data == queue->array[i].data)
       break;
   }
 
-  if (i < 0)
+  if (i == queue->size)
   {
     return;
   }
 
   swap(&queue->array[i], &queue->array[queue->size - 1]);
   queue->size -= 1;
-  for (int i = queue->size / 2 - 1; i >= 0; i--)
-  {
-    heapify(queue, i);
-  }
+  queue_bubble_sort(queue);
 }
 
 void queue_print(queue *queue)
 {
-#ifdef DEBUG
-  for (int i = 0; i < queue->size; ++i)
-    printf("%d ", queue->array[i].priority);
-  printf("\n");
-  for (int i = 0; i < queue->size; ++i)
-    printf("%d ", queue->array[i].data);
-  printf("\n");
+#ifdef QUEUE_PRINT
+  if (rank == 0)
+  {
+    printf("-----------------------------\n");
+    for (int i = 0; i < queue->size; ++i)
+      printf("%d ", queue->array[i].priority);
+    printf("\n");
+    for (int i = 0; i < queue->size; ++i)
+      printf("%d ", queue->array[i].data);
+    printf("\n");
+  }
 #endif
 }
 

@@ -18,7 +18,7 @@ void *pthread_delayed_release(void *ptr)
   println("Odkładam narzędzie do naładowania");
   packet_t *pkt = (packet_t *)ptr;
   sleep(random() % 10);
-  pkt->timestamp = globalLamport;
+  pkt->timestamp = getClock();
   for (int i = 0; i < size; i++)
     if (i != rank)
       sendPacket(pkt, i, RELEASE);
@@ -64,6 +64,7 @@ void mainLoop()
     case SendRequest:
       changeState(pkt->tag == TOOL ? WaitingForTool : WaitingForLab);
       changeClock(globalLamport + 1);
+      pkt->timestamp = getClock();
       ackCount = 0;
       for (int i = 0; i < size; i++)
       {

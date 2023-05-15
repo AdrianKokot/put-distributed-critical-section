@@ -49,4 +49,5 @@ void processRelease(packet_t packet);
 int canEnterCriticalSection();
 
 packet_t *createPacket(int tag);
+int getClock();
 #endif

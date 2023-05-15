@@ -70,6 +70,15 @@ void changeClock(int newLamport)
   pthread_mutex_unlock(&lamportMut);
 }
 
+int getClock()
+{
+  int clock;
+  pthread_mutex_lock(&lamportMut);
+  clock = globalLamport;
+  pthread_mutex_unlock(&lamportMut);
+  return clock;
+}
+
 void printProcessesClocks()
 {
 #ifdef DEBUG
@@ -103,16 +112,26 @@ void processRequest(packet_t packet)
   {
     pthread_mutex_lock(&toolsQueueMut);
     queue_insert(toolsQueue, newNode);
-    debug("ToolsQueue insert by %d", rank);
-    queue_print(toolsQueue);
+#ifdef QUEUE_PRINT
+    if (rank == 0)
+    {
+      printf("ToolsQueue insert %d %d", newNode.data, newNode.priority);
+      queue_print(toolsQueue);
+    }
+#endif
     pthread_mutex_unlock(&toolsQueueMut);
   }
   else
   {
     pthread_mutex_lock(&positionsQueueMut);
     queue_insert(positionsQueue, newNode);
-    debug("PositionsQueue insert by %d", rank);
-    queue_print(positionsQueue);
+#ifdef QUEUE_PRINT
+    if (rank == 0)
+    {
+      printf("PositionsQueue insert %d %d", newNode.data, newNode.priority);
+      queue_print(positionsQueue);
+    }
+#endif
     pthread_mutex_unlock(&positionsQueueMut);
   }
 }
@@ -123,16 +142,26 @@ void processRelease(packet_t packet)
   {
     pthread_mutex_lock(&toolsQueueMut);
     queue_delete(toolsQueue, packet.process);
-    debug("ToolsQueue release by %d", rank);
-    queue_print(toolsQueue);
+#ifdef QUEUE_PRINT
+    if (rank == 0)
+    {
+      printf("ToolsQueue release %d", packet.process);
+      queue_print(toolsQueue);
+    }
+#endif
     pthread_mutex_unlock(&toolsQueueMut);
   }
   else
   {
     pthread_mutex_lock(&positionsQueueMut);
     queue_delete(positionsQueue, packet.process);
-    debug("PositionsQueue release by %d", rank);
-    queue_print(positionsQueue);
+#ifdef QUEUE_PRINT
+    if (rank == 0)
+    {
+      printf("PositionsQueue release %d", packet.process);
+      queue_print(positionsQueue);
+    }
+#endif
     pthread_mutex_unlock(&positionsQueueMut);
   }
 };
@@ -170,5 +199,5 @@ packet_t *createDetailedPacket(int tag, int process, int timestamp)
 /// @return
 packet_t *createPacket(int tag)
 {
-  return createDetailedPacket(tag, rank, globalLamport);
+  return createDetailedPacket(tag, rank, getClock());
 }
