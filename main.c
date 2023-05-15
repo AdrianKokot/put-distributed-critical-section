@@ -68,7 +68,7 @@ int main(int argc, char **argv)
   if (rank == 0)
   {
     printf("====================================\n");
-    printf("Liczba kradziejów:\t%d\nLiczba narzędzi:\t%d\nLiczba miejsc:\t\t%d\n", size, tools_number, positions_number);
+    printf("Liczba kradziejów:\t%d\nIlość sprzętu:\t\t%d\nLiczba miejsc:\t\t%d\n", size, tools_number, positions_number);
     printf("====================================\n");
   }
   processesClocks = malloc(size * sizeof(int));

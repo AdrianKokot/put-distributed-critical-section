@@ -25,10 +25,6 @@ void sendPacket(packet_t *pkt, int destination, int tag);
 
 typedef enum
 {
-  // InRun,
-  // InMonitor,
-  // InWant,
-  // InSection,
   Start,
   InFinish,
   RequestTool,
@@ -52,5 +48,5 @@ void processRequest(packet_t packet);
 void processRelease(packet_t packet);
 int canEnterCriticalSection();
 
-packet_t *createPacket(int, int, int);
+packet_t *createPacket(int tag);
 #endif

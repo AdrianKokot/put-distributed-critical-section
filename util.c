@@ -47,19 +47,8 @@ void inicjuj_typ_pakietu()
 
 void sendPacket(packet_t *pkt, int destination, int tag)
 {
-  // changeClock(globalLamport + 1);
-  int freepkt = 0;
-  if (pkt == 0)
-  {
-    pkt = malloc(sizeof(packet_t));
-    freepkt = 1;
-  }
-  pkt->process = rank;
-  pkt->timestamp = globalLamport;
   MPI_Send(pkt, 1, MPI_PAKIET_T, destination, tag, MPI_COMM_WORLD);
   debug("Wysyłam %s do %d\n", tag2string(tag), destination);
-  if (freepkt)
-    free(pkt);
 }
 
 void changeState(state_t newState)
@@ -167,11 +156,19 @@ int canEnterCriticalSection(queue *queue, int first_n_allowed)
 /// @param process
 /// @param timestamp
 /// @return
-packet_t *createPacket(int tag, int process, int timestamp)
+packet_t *createDetailedPacket(int tag, int process, int timestamp)
 {
   packet_t *pkt = malloc(sizeof(packet_t));
   pkt->tag = tag;
   pkt->process = process;
   pkt->timestamp = timestamp;
   return pkt;
+}
+
+/// @brief Create new packet
+/// @param tag
+/// @return
+packet_t *createPacket(int tag)
+{
+  return createDetailedPacket(tag, rank, globalLamport);
 }

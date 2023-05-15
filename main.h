@@ -12,9 +12,6 @@
 #define TRUE 1
 #define FALSE 0
 #define SEC_IN_STATE 1
-#define STATE_CHANGE_PROB 10
-
-#define ROOT 0
 
 extern int rank;
 extern int size;

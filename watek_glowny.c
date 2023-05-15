@@ -13,11 +13,32 @@ int allAckOlder()
   return TRUE;
 }
 
+void *pthread_delayed_release(void *ptr)
+{
+  println("Odkładam narzędzie do naładowania");
+  packet_t *pkt = (packet_t *)ptr;
+  sleep(random() % 10);
+  pkt->timestamp = globalLamport;
+  for (int i = 0; i < size; i++)
+    if (i != rank)
+      sendPacket(pkt, i, RELEASE);
+    else
+      processRelease(*pkt);
+
+  free(pkt);
+  println("Narzędzie naładowane");
+}
+
+void delayed_release(int tag)
+{
+  pthread_t tid;
+  pthread_create(&tid, NULL, pthread_delayed_release, createPacket(tag));
+}
+
 void mainLoop()
 {
   srandom(rank);
   int tag;
-  int perc;
   packet_t *pkt;
 
   while (stan != InFinish)
@@ -41,11 +62,12 @@ void mainLoop()
       free(pkt);
       break;
     case SendRequest:
+      changeState(pkt->tag == TOOL ? WaitingForTool : WaitingForLab);
       changeClock(globalLamport + 1);
       ackCount = 0;
       for (int i = 0; i < size; i++)
       {
-        updateProcessClock(pkt->process, pkt->timestamp);
+        // updateProcessClock(pkt->process, pkt->timestamp);
 
         if (i != rank)
         {
@@ -57,38 +79,27 @@ void mainLoop()
         }
       }
 
-      changeState(pkt->tag == TOOL ? WaitingForTool : WaitingForLab);
       free(pkt);
       break;
 
     case RequestTool:
-      perc = random() % 100;
-
-      if (perc < 70)
-      {
-        println("Ubiegam się o narzędzie");
-        changeClock(globalLamport + 1);
-        pkt = createPacket(TOOL, rank, globalLamport);
-        changeState(SendRequest);
-      }
+      println("Ubiegam się o sprzęt");
+      changeClock(globalLamport + 1);
+      pkt = createPacket(TOOL);
+      changeState(SendRequest);
       break;
 
     case RequestLab:
-      perc = random() % 100;
-
-      if (perc < 70)
-      {
-        println("Ubiegam się o miejsce");
-        changeClock(globalLamport + 1);
-        pkt = createPacket(LAB, rank, globalLamport);
-        changeState(SendRequest);
-      }
+      println("Ubiegam się o miejsce");
+      changeClock(globalLamport + 1);
+      pkt = createPacket(LAB);
+      changeState(SendRequest);
       break;
 
     case WaitingForTool:
-#ifdef IGNORE_WAIT
-#else
-      println("Czekam na narzędzie");
+
+#ifndef IGNORE_WAIT
+      println("Czekam na sprzęt");
 #endif
       if (ackCount == size - 1 && canEnterCriticalSection(toolsQueue, tools_number) && allAckOlder())
         changeState(UsingTool);
@@ -96,8 +107,7 @@ void mainLoop()
       break;
 
     case WaitingForLab:
-#ifdef IGNORE_WAIT
-#else
+#ifndef IGNORE_WAIT
       println("Czekam na miejsce");
 #endif
       if (ackCount == size - 1 && canEnterCriticalSection(positionsQueue, positions_number) && allAckOlder())
@@ -105,19 +115,20 @@ void mainLoop()
 
       break;
     case UsingTool:
-      println("Używam narzędzia");
+      println("Dostałem sprzęt, krążę po mieście");
       sleep(random() % 10);
-      println("Oddaję narzędzie");
+      println("Znalazłem kogoś z dobrym nastrojem");
 
-      pkt = createPacket(TOOL, rank, globalLamport);
-      changeState(SendRelease);
+      delayed_release(TOOL);
+
+      changeState(RequestLab);
       break;
     case UsingLab:
-      println("Używam miejsca");
+      println("Zajmuję miejsce w laboratorium");
       sleep(random() % 10);
-      println("Oddaję miejsce");
+      println("Zwalniam miejsce w laboratorium");
 
-      pkt = createPacket(LAB, rank, globalLamport);
+      pkt = createPacket(LAB);
       changeState(SendRelease);
       break;
 
