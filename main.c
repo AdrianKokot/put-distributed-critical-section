@@ -2,7 +2,7 @@
 #include "watek_glowny.h"
 #include "watek_komunikacyjny.h"
 
-int rank, size, tools_number, positions_number;
+int rank, size, toolsNumber, positionsNumber;
 int ackCount = 0;
 int globalLamport = 0;
 int *processesClocks;
@@ -49,12 +49,12 @@ int main(int argc, char **argv)
 {
   if (argc < 3)
   {
-    printf("Usage: %s tools_number positions_number\n", argv[0]);
+    printf("Usage: %s toolsNumber positionsNumber\n", argv[0]);
     exit(1);
   }
 
-  tools_number = atoi(argv[1]);
-  positions_number = atoi(argv[2]);
+  toolsNumber = atoi(argv[1]);
+  positionsNumber = atoi(argv[2]);
 
   MPI_Status status;
   int provided;
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
   if (rank == 0)
   {
     printf("====================================\n");
-    printf("Liczba kradziejów:\t%d\nIlość sprzętu:\t\t%d\nLiczba miejsc:\t\t%d\n", size, tools_number, positions_number);
+    printf("Liczba kradziejów:\t%d\nIlość sprzętu:\t\t%d\nLiczba miejsc:\t\t%d\n", size, toolsNumber, positionsNumber);
     printf("====================================\n");
   }
 

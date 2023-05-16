@@ -54,7 +54,7 @@ void sendPacket(packet_t *pkt, int destination, int tag)
 void changeState(state_t newState)
 {
   pthread_mutex_lock(&stateMut);
-  if (stan == InFinish)
+  if (stan == Finish)
   {
     pthread_mutex_unlock(&stateMut);
     return;

@@ -15,8 +15,8 @@
 
 extern int rank;
 extern int size;
-extern int tools_number;
-extern int positions_number;
+extern int toolsNumber;
+extern int positionsNumber;
 extern int ackCount;
 extern int globalLamport;
 extern pthread_t threadKom;

@@ -26,16 +26,13 @@ void sendPacket(packet_t *pkt, int destination, int tag);
 typedef enum
 {
   Start,
-  InFinish,
+  Finish,
   RequestTool,
-  UsingTool,
   RequestLab,
+  UsingTool,
   UsingLab,
-  SendRequest,
   WaitingForLab,
   WaitingForTool,
-  SendRelease
-
 } state_t;
 extern state_t stan;
 extern pthread_mutex_t stateMut;

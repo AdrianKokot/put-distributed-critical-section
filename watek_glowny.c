@@ -72,7 +72,7 @@ void mainLoop()
   int tag;
   packet_t *pkt;
 
-  while (stan != InFinish)
+  while (stan != Finish)
   {
     switch (stan)
     {
@@ -95,7 +95,7 @@ void mainLoop()
 #ifndef IGNORE_WAIT
       println("Czekam na sprzęt");
 #endif
-      if (canEnterCriticalSection(toolsQueue, tools_number))
+      if (canEnterCriticalSection(toolsQueue, toolsNumber))
         changeState(UsingTool);
 
       break;
@@ -104,7 +104,7 @@ void mainLoop()
 #ifndef IGNORE_WAIT
       println("Czekam na miejsce");
 #endif
-      if (canEnterCriticalSection(positionsQueue, positions_number))
+      if (canEnterCriticalSection(positionsQueue, positionsNumber))
         changeState(UsingLab);
 
       break;
