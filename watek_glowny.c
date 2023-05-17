@@ -28,7 +28,6 @@ void release(int tag)
 {
   changeClock(globalLamport + 1);
   packet_t *pkt = createPacket(tag);
-  updateProcessClock(pkt->process, pkt->timestamp);
 
   for (int i = 0; i < size; i++)
   {

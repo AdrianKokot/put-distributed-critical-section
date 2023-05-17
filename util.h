@@ -43,7 +43,7 @@ void updateProcessClock(int, int);
 
 void processRequest(packet_t packet);
 void processRelease(packet_t packet);
-int canEnterCriticalSection();
+int canEnterCriticalSection(queue* queue, int first_n_allowed);
 
 packet_t *createPacket(int tag);
 int getClock();
